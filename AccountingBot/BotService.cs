@@ -1,29 +1,29 @@
 ﻿using AccountingBot.HttpApi;
 using AccountingBot.Models;
-using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace AccountingBot
 {
-    internal class AccountingHandler
+    /// <summary>
+    /// Bot后台服务类
+    /// </summary>
+    public class BotService : BackgroundService
     {
-        private readonly ILoginApi _loginApi;
         private readonly IChatApi _chatApi;
-
+        private readonly ILoginApi _loginApi;
         private string _session = string.Empty;
-
         private readonly BotConfig _config;
 
-        public AccountingHandler(ServiceProvider provider, BotConfig config)
+        public BotService(IChatApi chatApi, ILoginApi loginApi)
         {
-            _loginApi = provider.GetRequiredService<ILoginApi>();
-            _chatApi = provider.GetRequiredService<IChatApi>();
-            _config = config;
+            _chatApi = chatApi;
+            _loginApi = loginApi;
         }
 
-        internal async Task StartAsync()
+        protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await Task.Yield();
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
             while (await timer.WaitForNextTickAsync())
