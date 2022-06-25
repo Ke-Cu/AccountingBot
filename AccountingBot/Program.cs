@@ -1,3 +1,4 @@
+using AccountingBot;
 using AccountingBot.HttpApi;
 using Microsoft.OpenApi.Models;
 
@@ -36,7 +37,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHttpApi<ILoginApi>();
 builder.Services.AddHttpApi<IChatApi>();
-//builder.Services.AddHostedService<BotService>();
+builder.Services.AddHostedService<BotService>();
 
 var app = builder.Build();
 

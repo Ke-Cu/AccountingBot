@@ -19,6 +19,7 @@ namespace AccountingBot
         {
             _chatApi = chatApi;
             _loginApi = loginApi;
+            _config = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText("config.json"));
         }
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -195,27 +196,34 @@ namespace AccountingBot
 
         async void RefreshSession()
         {
-            var sessionInfo = await _loginApi.VerifyAsync(JsonSerializer.Serialize(new
+            try
             {
-                verifyKey = _config.VerifyKey
-            }));
+                var sessionInfo = await _loginApi.VerifyAsync(JsonSerializer.Serialize(new
+                {
+                    verifyKey = _config.VerifyKey
+                }));
 
-            Console.WriteLine($"获取到Session: {sessionInfo.Session}");
+                Console.WriteLine($"获取到Session: {sessionInfo.Session}");
 
-            var bindResult = await _loginApi.BindAsync(JsonSerializer.Serialize(new
-            {
-                sessionKey = sessionInfo.Session,
-                qq = _config.BotId
-            }));
+                var bindResult = await _loginApi.BindAsync(JsonSerializer.Serialize(new
+                {
+                    sessionKey = sessionInfo.Session,
+                    qq = _config.BotId
+                }));
 
-            if (bindResult.Code == 0)
-            {
-                _session = sessionInfo.Session;
-                Console.WriteLine("绑定Bot成功，开始获取消息");
+                if (bindResult.Code == 0)
+                {
+                    _session = sessionInfo.Session;
+                    Console.WriteLine("绑定Bot成功，开始获取消息");
+                }
+                else
+                {
+                    Console.WriteLine("绑定Bot失败，退出程序");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("绑定Bot失败，退出程序");
+                Console.WriteLine(ex.Message);
             }
         }
     }
