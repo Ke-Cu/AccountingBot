@@ -108,6 +108,14 @@ namespace AccountingBot
             return result;
         }
 
+        public async static Task<int> CorrectYesterdayDataAsync()
+        {
+            using var cnn = SimpleDbConnection();
+            cnn.Open();
+            var result = await cnn.ExecuteAsync("UPDATE AccountingRecord SET Item = replace(Item, '昨日', ''), CreateTime = CreateTime - 86400000 WHERE Item LIKE '昨日%'");
+            return result;
+        }
+
         public static SQLiteConnection SimpleDbConnection()
         {
             return new SQLiteConnection("Data Source=accounting.db");

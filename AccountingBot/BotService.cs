@@ -125,7 +125,7 @@ namespace AccountingBot
                                                     };
                                                 }
                                             }
-                                            else if (msg.Text.StartsWith("新增类别") && msg.Text.Length > 4)
+                                            else if ((msg.Text.StartsWith("新增类别") || msg.Text.StartsWith("增加类别")) && msg.Text.Length > 4)
                                             {
                                                 var type = msg.Text[4..].Trim();
                                                 if (type.Length > 30)
@@ -165,6 +165,26 @@ namespace AccountingBot
                                                     Type = "Plain",
                                                     Text = $"类别列表：\r\n{string.Join("\r\n", typeList.Select(e => e.TypeName).ToList())}"
                                                 };
+                                            }
+                                            else if (msg.Text == "更正所有昨日数据")
+                                            {
+                                                var affectedDataCount = await DataHelper.CorrectYesterdayDataAsync();
+                                                if (affectedDataCount == 0)
+                                                {
+                                                    messageContent = new TextMessage
+                                                    {
+                                                        Type = "Plain",
+                                                        Text = "当前没有需要更正的数据"
+                                                    };
+                                                }
+                                                else
+                                                {
+                                                    messageContent = new TextMessage
+                                                    {
+                                                        Type = "Plain",
+                                                        Text = $"更正了{affectedDataCount}条昨日数据"
+                                                    };
+                                                }
                                             }
                                         }
                                     }
