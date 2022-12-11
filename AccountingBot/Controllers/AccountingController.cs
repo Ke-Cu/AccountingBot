@@ -1,6 +1,7 @@
 using AccountingBot.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace AccountingBot.Controllers;
 
@@ -92,6 +93,39 @@ public class AccountingController : ControllerBase
         return Ok(new
         {
             TotalAmount = details.Sum(e => e.Amount),
+            Data = result
+        });
+    }
+
+    /// <summary>
+    /// 获取月度统计数据内容
+    /// </summary>
+    /// <param name="year">年</param>
+    /// <param name="month">月</param>
+    /// <returns></returns>
+    [HttpGet("monthlystatistics")]
+    public async Task<IActionResult> GetMonthlystatisticsAsync(int year, int month)
+    {
+        var fromTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{year}-{month}");
+        var toDate = (new DateTime(year, month, 1)).AddMonths(1);
+        var toTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{toDate.Year}-{toDate.Month}");
+        var data = await DataHelper.GetMoneyRecordsAsync(fromTimestamp, toTimestamp);
+        var result = data.GroupBy(e => e.TypeName).Select(group => new
+        {
+            Type = group.Key,
+            Amount = group.Sum(e => e.Amount),
+            Details = group.Select(e => new
+            {
+                e.Amount,
+                e.Item,
+                CreateTime = DateTimeOffset.FromUnixTimeMilliseconds(e.CreateTime).ToOffset(TimeSpan.FromHours(8)).ToString("yyyy-MM-dd"),
+                e.TypeName
+            })
+        });
+
+        return Ok(new
+        {
+            TotalAmount = data.Sum(e => e.Amount),
             Data = result
         });
     }
