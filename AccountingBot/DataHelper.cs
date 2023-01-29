@@ -116,6 +116,22 @@ namespace AccountingBot
             return result;
         }
 
+        /// <summary>
+        /// 获取用户信息
+        /// </summary>
+        /// <returns></returns>
+        public async static Task<UserRecord> GetUserAsync(string userName)
+        {
+            using var cnn = SimpleDbConnection();
+            cnn.Open();
+            var result = await cnn.QueryFirstOrDefaultAsync<UserRecord>("select * from User where UserName = @UserName", new
+            {
+                UserName = userName
+            });
+
+            return result;
+        }
+
         public static SQLiteConnection SimpleDbConnection()
         {
             return new SQLiteConnection("Data Source=accounting.db");

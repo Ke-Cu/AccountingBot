@@ -1,5 +1,8 @@
 using AccountingBot;
 using AccountingBot.HttpApi;
+using AccountingBot.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +17,31 @@ builder.Services.AddCors(options =>
         .AllowAnyHeader());
 });
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(nameof(JwtSettings)));
+var bindJwtSettings = new JwtSettings();
+builder.Configuration.Bind("JwtSettings", bindJwtSettings);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuerSigningKey = bindJwtSettings.ValidateIssuerSigningKey,
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(bindJwtSettings.IssuerSigningKey)),
+        ValidateIssuer = bindJwtSettings.ValidateIssuer,
+        ValidIssuer = bindJwtSettings.ValidIssuer,
+        ValidateAudience = bindJwtSettings.ValidateAudience,
+        ValidAudience = bindJwtSettings.ValidAudience,
+        RequireExpirationTime = bindJwtSettings.RequireExpirationTime,
+        ValidateLifetime = bindJwtSettings.RequireExpirationTime,
+        ClockSkew = TimeSpan.FromDays(1),
+    };
+});
 builder.Services.AddRouting(option => option.LowercaseUrls = true);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -37,7 +65,9 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHttpApi<ILoginApi>();
 builder.Services.AddHttpApi<IChatApi>();
+#if !DEBUG
 builder.Services.AddHostedService<BotService>();
+#endif
 
 var app = builder.Build();
 

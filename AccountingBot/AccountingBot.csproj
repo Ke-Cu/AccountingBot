@@ -9,8 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.116" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.26.0" />
     <PackageReference Include="WebApiClientCore" Version="2.0.2" />
   </ItemGroup>
 
