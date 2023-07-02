@@ -350,3 +350,5 @@ MigrationBackup/
 .ionide/
 
 config.json
+cqhttp_receiver_real.py
+manual_input_real.py

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32421.90
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountingBot", "AccountingBot\AccountingBot.csproj", "{3C7CDF18-7721-4EDE-BDE7-04B2EF50DF5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountingBot", "src\AccountingBot\AccountingBot.csproj", "{3C7CDF18-7721-4EDE-BDE7-04B2EF50DF5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

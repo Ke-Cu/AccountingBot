@@ -1,4 +1,6 @@
 using AccountingBot.Models;
+using idunno.Authentication.Basic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -127,5 +129,13 @@ public class AccountingController : ControllerBase
             TotalAmount = data.Sum(e => e.Amount),
             Data = result
         });
+    }
+
+    [HttpPost("remotecall")]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> RemoteCallAsync([FromBody] MessageOutput message)
+    {
+        var result = await BotService.GetMessageResponseAsync(message);
+        return Ok(result);
     }
 }

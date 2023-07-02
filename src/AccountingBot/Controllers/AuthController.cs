@@ -1,4 +1,5 @@
 ﻿using AccountingBot.Models;
+using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -47,7 +48,7 @@ public class AuthController : ControllerBase
     /// Auth verify
     /// </summary>
     [HttpGet]
-    [Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
     public IActionResult Verify()
     {
         return Ok();

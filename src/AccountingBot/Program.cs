@@ -1,9 +1,12 @@
 using AccountingBot;
 using AccountingBot.HttpApi;
 using AccountingBot.Models;
+using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,27 +24,36 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(nameof(
 var bindJwtSettings = new JwtSettings();
 builder.Configuration.Bind("JwtSettings", bindJwtSettings);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters()
+builder.Services.Configure<BasicAuthConfig>(builder.Configuration.GetSection(nameof(BasicAuthConfig)));
+
+builder.Services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme)
+    .AddBasic(options =>
     {
-        ValidateIssuerSigningKey = bindJwtSettings.ValidateIssuerSigningKey,
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(bindJwtSettings.IssuerSigningKey)),
-        ValidateIssuer = bindJwtSettings.ValidateIssuer,
-        ValidIssuer = bindJwtSettings.ValidIssuer,
-        ValidateAudience = bindJwtSettings.ValidateAudience,
-        ValidAudience = bindJwtSettings.ValidAudience,
-        RequireExpirationTime = bindJwtSettings.RequireExpirationTime,
-        ValidateLifetime = bindJwtSettings.RequireExpirationTime,
-        ClockSkew = TimeSpan.FromDays(1),
-    };
-});
+        options.Realm = "Basic Authentication";
+        options.Events = new BasicAuthenticationEvents
+        {
+            OnValidateCredentials = context =>
+            {
+                var config = context.HttpContext.RequestServices.GetService<IOptions<BasicAuthConfig>>();
+                if (context.Username == config.Value.UasrName && context.Password == config.Value.Password)
+                {
+                    var claims = new[]
+                    {
+                                    new Claim(ClaimTypes.NameIdentifier, context.Username, ClaimValueTypes.String, context.Options.ClaimsIssuer),
+                                    new Claim(ClaimTypes.Name, context.Username, ClaimValueTypes.String, context.Options.ClaimsIssuer)
+                                };
+
+                    context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
+                    context.Success();
+
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+builder.Services.AddAuthorization();
+
 builder.Services.AddRouting(option => option.LowercaseUrls = true);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
