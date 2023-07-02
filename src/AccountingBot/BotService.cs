@@ -191,7 +191,7 @@ namespace AccountingBot
                                     Text = $"类别列表：\r\n{string.Join("\r\n", typeList.Select(e => e.TypeName).ToList())}"
                                 };
                             }
-                            else if (msg.Text == "更正所有昨日数据")
+                            else if (msg.Text == "更正所有昨日数据" || msg.Text == "更正昨日数据")
                             {
                                 var affectedDataCount = await DataHelper.CorrectYesterdayDataAsync();
                                 if (affectedDataCount == 0)
@@ -208,6 +208,26 @@ namespace AccountingBot
                                     {
                                         Type = "Plain",
                                         Text = $"更正了{affectedDataCount}条昨日数据"
+                                    };
+                                }
+                            }
+                            else if (msg.Text == "更正所有历史数据" || msg.Text == "更正历史数据")
+                            {
+                                var affectedData = await DataHelper.CorrectAllDataAsync();
+                                if (!affectedData.Any())
+                                {
+                                    messageContent = new TextMessage
+                                    {
+                                        Type = "Plain",
+                                        Text = "当前没有需要更正的数据"
+                                    };
+                                }
+                                else
+                                {
+                                    messageContent = new TextMessage
+                                    {
+                                        Type = "Plain",
+                                        Text = $"更正了{affectedData.Count()}条历史数据：\r\n{string.Join("\r\n", affectedData)}"
                                     };
                                 }
                             }

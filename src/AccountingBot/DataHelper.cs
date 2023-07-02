@@ -136,5 +136,40 @@ namespace AccountingBot
         {
             return new SQLiteConnection("Data Source=accounting.db");
         }
+
+        public async static Task<List<string>> CorrectAllDataAsync()
+        {
+            using var cnn = SimpleDbConnection();
+            cnn.Open();
+            var result = new List<string>();
+            var records = await cnn.QueryAsync<AccountingRecord>("select * from AccountingRecord where Item like '%月%日%'");
+            if (records != null)
+            {
+                foreach (var record in records)
+                {
+                    var positionToRemove = record.Item.IndexOf("日") + 1;
+
+                    if (positionToRemove > 0 && (positionToRemove + 1) < record.Item.Length)
+                    {
+                        var timeString = record.Item.Remove(positionToRemove);
+                        var timestamp = TimeHelper.GetLocalTimeFromTimeString(timeString);
+                        var item = record.Item.Substring(positionToRemove);
+                        var affectedRows = await cnn.ExecuteAsync("UPDATE AccountingRecord SET Item = @Item, CreateTime = @CreateTime WHERE Id = @Id", new
+                        {
+                            Item = item,
+                            CreateTime = timestamp,
+                            Id = record.Id,
+                        });
+
+                        if (affectedRows > 0)
+                        {
+                            result.Add(record.Item);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }
