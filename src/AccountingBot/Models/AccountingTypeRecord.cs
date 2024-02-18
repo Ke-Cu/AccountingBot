@@ -1,5 +1,10 @@
-﻿namespace AccountingBot.Models
+﻿using Swashbuckle.AspNetCore.Annotations;
+
+namespace AccountingBot.Models
 {
+    /// <summary>
+    /// 记账类型信息
+    /// </summary>
     public class AccountingTypeRecord
     {
         /// <summary>
@@ -15,11 +20,13 @@
         /// <summary>
         /// 是否默认类型
         /// </summary>
+        [SwaggerSchema(ReadOnly = true)]
         public bool Default { get; set; }
 
         /// <summary>
         /// 消息ID
         /// </summary>
+        [SwaggerSchema(ReadOnly = true)]
         public long MsgId { get; set; }
     }
 }

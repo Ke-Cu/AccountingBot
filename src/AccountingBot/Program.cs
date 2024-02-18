@@ -2,9 +2,7 @@ using AccountingBot;
 using AccountingBot.HttpApi;
 using AccountingBot.Models;
 using idunno.Authentication.Basic;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 
@@ -29,6 +27,7 @@ builder.Services.Configure<BasicAuthConfig>(builder.Configuration.GetSection(nam
 builder.Services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme)
     .AddBasic(options =>
     {
+        options.AllowInsecureProtocol = true;
         options.Realm = "Basic Authentication";
         options.Events = new BasicAuthenticationEvents
         {
@@ -73,6 +72,7 @@ builder.Services.AddSwaggerGen(c =>
     });
     var filePath = Path.Combine(AppContext.BaseDirectory, "AccountingBot.xml");
     c.IncludeXmlComments(filePath);
+    c.EnableAnnotations();
 });
 
 builder.Services.AddHttpApi<ILoginApi>();

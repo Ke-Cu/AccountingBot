@@ -3,6 +3,7 @@ using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
 
 namespace AccountingBot.Controllers;
 
@@ -129,6 +130,110 @@ public class AccountingController : ControllerBase
             TotalAmount = data.Sum(e => e.Amount),
             Data = result
         });
+    }
+
+    /// <summary>
+    /// 获取所有记账类型
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("types")]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<AccountingTypeRecord>))]
+    public async Task<IActionResult> GetAccountingTypes()
+    {
+        var typeList = await DataHelper.GetAccountingTypeListAsync();
+        return Ok(typeList);
+    }
+
+    /// <summary>
+    /// 新增类别（需认证）
+    /// </summary>
+    /// <returns>添加成功的类型ID</returns>
+    [HttpPost("type")]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> AddAccountingType(AccountingTypeRecord accountingType)
+    {
+        if (string.IsNullOrEmpty(accountingType.TypeName))
+        {
+            return BadRequest("类型名称不能为空");
+        }
+
+
+        if (accountingType.TypeName.Length > 30)
+        {
+            return BadRequest("类型名称长度不能超过30");
+        }
+
+        var typeId = await DataHelper.GetAccountingTypeAsync(accountingType.TypeName);
+        if (typeId > 0)
+        {
+            return BadRequest("类型已存在");
+        }
+
+        await DataHelper.AddAccountingTypeAsync(accountingType.TypeName, false, -1);
+        typeId = await DataHelper.GetAccountingTypeAsync(accountingType.TypeName);
+
+        return Ok(new
+        {
+            Data = new
+            {
+                TypeId = typeId
+            }
+        });
+    }
+
+    /// <summary>
+    /// 获取指定日期的全部数据
+    /// </summary>
+    /// <param name="year">年</param>
+    /// <param name="month">月</param>
+    /// <param name="day">日</param>
+    /// <returns></returns>
+    [HttpGet("records-on-date")]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<MoneyRecord>))]
+    public async Task<IActionResult> GetAccountingRecordsByDate(int year, int month, int day)
+    {
+        var fromTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{year}-{month}-{day}");
+        var toTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{year}-{month}-{day + 1}");
+        var data = await DataHelper.GetMoneyRecordsAsync(fromTimestamp, toTimestamp);
+        return Ok(data);
+    }
+
+    /// <summary>
+    /// 新增记录（需认证）
+    /// </summary>
+    /// <returns>新增结果</returns>
+    [HttpPost("record")]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> AddAccountingRecord(MoneyRecord moneyRecord)
+    {
+        var typeId = await DataHelper.GetAccountingTypeAsync(moneyRecord.TypeId);
+        if (typeId == -1)
+        {
+            return BadRequest("类型不存在");
+        }
+
+        await DataHelper.AddMoneyRecordAsync(-1, moneyRecord.Item, moneyRecord.Amount, -1, typeId, moneyRecord.CreateTime);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// 删除记录（需认证）
+    /// </summary>
+    /// <returns>删除结果</returns>
+    [HttpDelete("record")]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> RemoveAccountingRecord(long id)
+    {
+        var result = await DataHelper.RemoveAccountingRecordByIdAsync(id);
+        if (result == true)
+        {
+            return Ok();
+        }
+        else
+        {
+            return BadRequest("记录不存在");
+        }
     }
 
     [HttpPost("remotecall")]

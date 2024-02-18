@@ -6,13 +6,17 @@ namespace AccountingBot
 {
     public static class DataHelper
     {
-        public async static Task<bool> AddMoneyRecordAsync(long userId, string item, decimal amount, long msgId, long typeId)
+        public async static Task<bool> AddMoneyRecordAsync(long userId, string item, decimal amount, long msgId, long typeId, long createTime = 0)
         {
+            if (createTime == 0)
+            {
+                createTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            }
             using var cnn = SimpleDbConnection();
             cnn.Open();
             return await cnn.ExecuteAsync("insert into AccountingRecord(CreateTime, CreateUser, Item, Amount, MsgId, TypeId) values (@CreateTime, @CreateUser, @Item, @Amount, @MsgId, @TypeId)", new
             {
-                CreateTime = DateTimeOffset.Now.ToUnixTimeMilliseconds(),
+                CreateTime = createTime,
                 CreateUser = userId,
                 Item = item,
                 Amount = amount,
@@ -53,6 +57,21 @@ namespace AccountingBot
             }) > 0;
         }
 
+        /// <summary>
+        /// 通过记录ID删除账单记录
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async static Task<bool> RemoveAccountingRecordByIdAsync(long id)
+        {
+            using var cnn = SimpleDbConnection();
+            cnn.Open();
+            return await cnn.ExecuteAsync("delete from AccountingRecord where Id = @Id", new
+            {
+                Id = id
+            }) > 0;
+        }
+
         public async static Task<long> GetAccountingTypeAsync(string typeName)
         {
             using var cnn = SimpleDbConnection();
@@ -60,6 +79,23 @@ namespace AccountingBot
             var type = await cnn.QueryFirstOrDefaultAsync<AccountingTypeRecord>("select * from AccountingType where TypeName = @TypeName", new
             {
                 TypeName = typeName
+            });
+
+            if (type != null)
+            {
+                return type.TypeId;
+            }
+
+            return -1;
+        }
+
+        public async static Task<long> GetAccountingTypeAsync(long typeId)
+        {
+            using var cnn = SimpleDbConnection();
+            cnn.Open();
+            var type = await cnn.QueryFirstOrDefaultAsync<AccountingTypeRecord>("select * from AccountingType where TypeId = @TypeId", new
+            {
+                TypeId = typeId
             });
 
             if (type != null)
