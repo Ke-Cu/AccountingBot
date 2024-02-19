@@ -10,6 +10,7 @@ namespace AccountingBot.Models
         /// <summary>
         /// 类别ID
         /// </summary>
+        [SwaggerSchema(ReadOnly = true)]
         public long TypeId { get; set; }
 
         /// <summary>
