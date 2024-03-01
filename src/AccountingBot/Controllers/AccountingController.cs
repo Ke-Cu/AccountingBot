@@ -193,7 +193,7 @@ public class AccountingController : ControllerBase
     public async Task<IActionResult> GetAccountingRecordsByDate(int year, int month, int day)
     {
         var fromTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{year}-{month}-{day}");
-        var toTimestamp = TimeHelper.GetLocalTimeFromTimeString($"{year}-{month}-{day + 1}");
+        var toTimestamp = fromTimestamp + (long)TimeSpan.FromDays(1).TotalMilliseconds - 1;
         var data = await DataHelper.GetMoneyRecordsAsync(fromTimestamp, toTimestamp);
         return Ok(data);
     }
