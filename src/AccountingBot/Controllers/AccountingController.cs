@@ -182,6 +182,25 @@ public class AccountingController : ControllerBase
     }
 
     /// <summary>
+    /// 删除类别（需认证）
+    /// </summary>
+    /// <returns>删除结果</returns>
+    [HttpDelete("type")]
+    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> RemoveAccountingTypeAsync(long id)
+    {
+        var errorMsg = await DataHelper.RemoveAccountingTypeByIdAsync(id);
+        if (string.IsNullOrEmpty(errorMsg))
+        {
+            return Ok();
+        }
+        else
+        {
+            return BadRequest(errorMsg);
+        }
+    }
+
+    /// <summary>
     /// 获取指定日期的全部数据
     /// </summary>
     /// <param name="year">年</param>
@@ -212,9 +231,15 @@ public class AccountingController : ControllerBase
             return BadRequest("类型不存在");
         }
 
-        await DataHelper.AddMoneyRecordAsync(-1, moneyRecord.Item, moneyRecord.Amount, -1, typeId, moneyRecord.CreateTime);
+        var id = await DataHelper.AddMoneyRecordAsync(-1, moneyRecord.Item, moneyRecord.Amount, -1, typeId, moneyRecord.CreateTime);
 
-        return Ok();
+        return Ok(new
+        {
+            Data = new
+            {
+                Id = id
+            }
+        });
     }
 
     /// <summary>

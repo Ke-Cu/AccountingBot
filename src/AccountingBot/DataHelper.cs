@@ -6,7 +6,7 @@ namespace AccountingBot
 {
     public static class DataHelper
     {
-        public async static Task<bool> AddMoneyRecordAsync(long userId, string item, decimal amount, long msgId, long typeId, long createTime = 0)
+        public async static Task<long> AddMoneyRecordAsync(long userId, string item, decimal amount, long msgId, long typeId, long createTime = 0)
         {
             if (createTime == 0)
             {
@@ -14,7 +14,8 @@ namespace AccountingBot
             }
             using var cnn = SimpleDbConnection();
             cnn.Open();
-            return await cnn.ExecuteAsync("insert into AccountingRecord(CreateTime, CreateUser, Item, Amount, MsgId, TypeId) values (@CreateTime, @CreateUser, @Item, @Amount, @MsgId, @TypeId)", new
+            using var transaction = cnn.BeginTransaction();
+            await cnn.ExecuteAsync("insert into AccountingRecord(CreateTime, CreateUser, Item, Amount, MsgId, TypeId) values (@CreateTime, @CreateUser, @Item, @Amount, @MsgId, @TypeId)", new
             {
                 CreateTime = createTime,
                 CreateUser = userId,
@@ -22,7 +23,10 @@ namespace AccountingBot
                 Amount = amount,
                 MsgId = msgId,
                 TypeId = typeId
-            }) > 0;
+            });
+            var rowId = cnn.LastInsertRowId;
+            transaction.Commit();
+            return rowId;
         }
 
         public async static Task<IEnumerable<MoneyRecord>> GetMoneyRecordsAsync(long fromTime, long endTime = long.MaxValue)
@@ -206,6 +210,38 @@ namespace AccountingBot
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 通过记账类型ID删除记账类型
+        /// </summary>
+        /// <param name="id">类型ID</param>
+        /// <returns></returns>
+        public async static Task<string> RemoveAccountingTypeByIdAsync(long id)
+        {
+            var typeId = await GetAccountingTypeAsync(id);
+            if (typeId == -1)
+            {
+                return "类型不存在";
+            }
+
+            using var cnn = SimpleDbConnection();
+            var type = await cnn.QueryFirstOrDefaultAsync<AccountingTypeRecord>("SELECT * FROM AccountingRecord where TypeId = @TypeId LIMIT 1", new
+            {
+                TypeId = typeId
+            });
+
+            if (type != null)
+            {
+                return "此类型已被引用";
+            }
+
+            await cnn.ExecuteAsync("DELETE FROM AccountingType where TypeId = @TypeId", new
+            {
+                TypeId = typeId
+            });
+
+            return string.Empty;
         }
     }
 }
